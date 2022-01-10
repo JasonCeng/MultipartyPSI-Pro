@@ -1,0 +1,93 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Header Files\Common">
+      <UniqueIdentifier>{359cc1cc-4102-4809-a1b7-e2caa2a3636c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Crypto">
+      <UniqueIdentifier>{6c565298-e3cd-46bb-ae95-92da3ac58263}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\OT">
+      <UniqueIdentifier>{027acd13-01ed-4769-97d7-c9f831a8adc7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Network">
+      <UniqueIdentifier>{a2dd4791-8f4b-4dac-855c-078730828278}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\MPSI">
+      <UniqueIdentifier>{2c805d83-f4ab-4d62-955f-b15c2a623158}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\RiotPSI">
+      <UniqueIdentifier>{035bde2d-81b4-4425-ad82-3126b065ef78}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\OT\Base">
+      <UniqueIdentifier>{2a97e7f3-304a-4572-85d5-2ba9ba9f2d1d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\OT\Base\tools">
+      <UniqueIdentifier>{a05faa47-09f3-49b9-a243-0ba12f7c4c91}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\MPSI\Dcw">
+      <UniqueIdentifier>{311376e4-22b0-408c-99f0-09c19f3dc25e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="OPPRF\OPPRFReceiver.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OPPRF\OPPRFSender.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Hashing\CuckooHasher1.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Hashing\SimpleHasher1.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Hashing\BitPosition.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OPPRF\binSet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="OPPRF\OPPRFReceiver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OPPRF\OPPRFSender.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Hashing\CuckooHasher1.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Hashing\SimpleHasher1.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Hashing\BitPosition.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OPPRF\binSet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OPPRF\EQReceiver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OPPRF\EQSender.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="CMakeLists.txt" />
+  </ItemGroup>
+</Project>
