@@ -15,6 +15,9 @@ add_definitions(-DSOLUTION_DIR=\"${CMAKE_SOURCE_DIR}\")
 set(CMAKE_C_FLAGS "-ffunction-sections -Wall  -maes -msse2 -msse4.1 -mpclmul -Wfatal-errors -pthread")
 set(CMAKE_CXX_FLAGS  "${CMAKE_C_FLAGS}  -std=c++14")
 
+# set(CMAKE_CONFIGURATION_TYPES "Debug")
+set(CMAKE_BUILD_TYPE "Debug")
+
 # Set a default build type for single-configuration
 # CMake generators if no build type is set.
 if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
@@ -26,9 +29,9 @@ if(NOT ${CMAKE_BUILD_TYPE} STREQUAL "Release")
 endif()
 
 # Select flags.
-SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
+SET(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 -Wall")
 SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g")
-SET(CMAKE_CXX_FLAGS_DEBUG  "-O0 -g")
+SET(CMAKE_CXX_FLAGS_DEBUG  "$ENV{CXXFLAGS} -O0 -Wall -g2 -ggdb")
 
 
 #############################################

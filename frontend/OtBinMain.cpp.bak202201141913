@@ -1386,9 +1386,8 @@ void tparty(u64 myIdx, u64 nParties, u64 tParties, u64 setSize, u64 nTrials, std
 	u64 leaderIdx = nParties - 1; //leader party
 
 	u8 **elements; //add by zengzc 20220113: 待求交集的数据
-    u64 nelements=0, *elebytelens;
-	u32 elebytelen=16, symsecbits=128, intersect_size = 0, i, j, ntasks=1,
-			pnelements, *res_bytelens, nclients = 2;
+	u32 nelements=0, elebytelen=16, symsecbits=128, intersect_size = 0, i, j, ntasks=1,
+			pnelements, *elebytelens, *res_bytelens, nclients = 2;
 	std::cout << "tparty input filename:" << filename << "\n";
 	// std::string filename(filename.c_str());
 
@@ -1505,35 +1504,32 @@ void tparty(u64 myIdx, u64 nParties, u64 tParties, u64 setSize, u64 nTrials, std
 		block blk_rand = prngSame.get<block>();
 		expected_intersection = (*(u64*)&blk_rand) % setSize;
 
-        // add by zengzc 20220114
+		// add by zengzc 20220114
 		std::cout << "==========start build set==========" << "\n";
 		for(i = 0; i < nelements; i++) {
-            // std::cout << "before create itemStrVector" << "\n";
-			std::vector<std::string> itemStrVector(nelements);
-            // std::cout << "after create itemStrVector" << "\n";
-            std::string itemStr = "";
+			// std::cout << "Element " << i << ": ";
+			// std::stringstream ss;
+			std::vector<std::string> itemStrVector;
 			for(j = 0; j < (elebytelens)[i]; j++) {
-				itemStr += (elements)[i][j];
+				itemStrVector[i] += (elements)[i][j];
 			}
-            itemStrVector[i] = itemStr;
-            // std::cout << "itemStrVector[i]=" << itemStrVector[i] << "\n";
 
-			// std::string s = itemStrVector[i];
-			int len = itemStr.length();
-			int b[4] = {};
-			for ( std::string::size_type k = 0, m = 0; k < 4 && m < itemStr.size(); m++ )
+			std::string s = itemStrVector[i];
+			int len = s.length();
+			unsigned short b[8] = {};
+			for ( std::string::size_type k = 0, m = 0; k < 8 && m < s.size(); m++ )
 			{
-				b[k] = b[k] << len | (unsigned char)itemStr[m];
+				b[k] = b[k] << len | (unsigned char)s[m];
 				if ( m % sizeof( *b ) == sizeof( *b ) - 1 ) k++;
 			}
 
-			set[i] = _mm_set_epi32(b[0],b[1],b[2],b[3]);
+			set[i] = _mm_set_epi16(b[0],b[1],b[2],b[3],b[4],b[5],b[6],b[7]);
 			std::cout << set[i] << "\n";
 		}
 		std::cout << "==========end build set==========" << "\n";
 
-		// // comment by zengzc 20220110
-		// // 创建交集数据
+		// comment by zengzc 20220110
+		// 创建交集数据
 		// std::cout << "==========start expected_intersection==========" << "\n";
 		// for (u64 i = 0; i < expected_intersection; ++i)
 		// {
@@ -1543,8 +1539,8 @@ void tparty(u64 myIdx, u64 nParties, u64 tParties, u64 setSize, u64 nTrials, std
 		// std::cout << "==========expected_intersection count:" << expected_intersection << "==========\n";
 		// std::cout << "==========end expected_intersection==========" << "\n";
 
-		// // comment by zengzc 20220110
-		// // 创建非交集数据
+		// comment by zengzc 20220110
+		// 创建非交集数据
 		// for (u64 i = expected_intersection; i < setSize; ++i)
 		// {
 		// 	set[i] = prngDiff.get<block>();
@@ -1617,18 +1613,18 @@ void tparty(u64 myIdx, u64 nParties, u64 tParties, u64 setSize, u64 nTrials, std
 		if (myIdx != leaderIdx) {//generate share of zero for leader myIDx!=n-1		
 			for (u64 idxP = 0; idxP < ttParties; ++idxP)
 			{
-				sendPayLoads[idxP].resize(nelements);
+				sendPayLoads[idxP].resize(setSize);
 				// sendPayLoads1[idxP].resize(nelements);
-				for (u64 i = 0; i < nelements; ++i)
+				for (u64 i = 0; i < setSize; ++i)
 				{
 					sendPayLoads[idxP][i] = prng.get<block>();
 					// sendPayLoads1[idxP][i] = prng.get<std::string>();
 				}
 			}
 
-			sendPayLoads[ttParties].resize(nelements); //share to leader at second phase
+			sendPayLoads[ttParties].resize(setSize); //share to leader at second phase
 			// sendPayLoads1[ttParties].resize(nelements); //share to leader at second phase
-			for (u64 i = 0; i < nelements; ++i)
+			for (u64 i = 0; i < setSize; ++i)
 			// for (u64 i = 0; i < nelements; ++i)
 			{
 				sendPayLoads[ttParties][i] = ZeroBlock;
@@ -1642,7 +1638,7 @@ void tparty(u64 myIdx, u64 nParties, u64 tParties, u64 setSize, u64 nTrials, std
 			for (u64 idxP = 0; idxP < recvPayLoads.size(); ++idxP)
 			// for (u64 idxP = 0; idxP < recvPayLoads1.size(); ++idxP)
 			{
-				recvPayLoads[idxP].resize(nelements);
+				recvPayLoads[idxP].resize(setSize);
 				// recvPayLoads1[idxP].resize(nelements);
 			}
 
@@ -1657,14 +1653,14 @@ void tparty(u64 myIdx, u64 nParties, u64 tParties, u64 setSize, u64 nTrials, std
 			for (u64 idxP = 0; idxP < recvPayLoads.size(); ++idxP)
 			// for (u64 idxP = 0; idxP < recvPayLoads1.size(); ++idxP)
 			{
-				recvPayLoads[idxP].resize(nelements);
+				recvPayLoads[idxP].resize(setSize);
 				// recvPayLoads1[idxP].resize(nelements);
 			}
 
 		}
 
 		// bins.init(myIdx, nParties, setSize, psiSecParam, opt);
-		bins.init(myIdx, nParties, nelements, psiSecParam, opt);
+		bins.init(myIdx, nParties, setSize, psiSecParam, opt);
 		u64 otCountSend = bins.mSimpleBins.mBins.size();
 		u64 otCountRecv = bins.mCuckooBins.mBins.size();
 
@@ -1693,7 +1689,7 @@ void tparty(u64 myIdx, u64 nParties, u64 tParties, u64 setSize, u64 nTrials, std
 
 
 						//prevIdx << " --> " << myIdx
-						recv[prevIdx].init(opt, nParties, nelements, psiSecParam, bitSize, chls[prevIdx], otCountRecv, otRecv[prevIdx], otSend[prevIdx], ZeroBlock, false);
+						recv[prevIdx].init(opt, nParties, setSize, psiSecParam, bitSize, chls[prevIdx], otCountRecv, otRecv[prevIdx], otSend[prevIdx], ZeroBlock, false);
 
 					});
 
@@ -1719,7 +1715,7 @@ void tparty(u64 myIdx, u64 nParties, u64 tParties, u64 setSize, u64 nTrials, std
 							//std::cout << myIdx << "| d: " << "| thr[" << pIdx << "]:" << myIdx << " <->> " << nextIdx << ": " << static_cast<int16_t>(dummy[nextIdx]) << "\n";
 							//std::cout << IoStream::unlock;
 
-							send[nextIdx].init(opt, nParties, nelements, psiSecParam, bitSize, chls[nextIdx], otCountSend, otSend[nextIdx], otRecv[nextIdx], prng.get<block>(), true);
+							send[nextIdx].init(opt, nParties, setSize, psiSecParam, bitSize, chls[nextIdx], otCountSend, otSend[nextIdx], otRecv[nextIdx], prng.get<block>(), true);
 						}
 						else if (myIdx > nextIdx) //by index
 						{
@@ -1729,7 +1725,7 @@ void tparty(u64 myIdx, u64 nParties, u64 tParties, u64 setSize, u64 nTrials, std
 							std::cout << myIdx << "| d: " << "| thr[" << pIdx << "]:" << myIdx << " <<-> " << nextIdx << ": " << static_cast<int16_t>(revDummy[nextIdx]) << "\n";
 							std::cout << IoStream::unlock;*/
 
-							recv[nextIdx].init(opt, nParties, nelements, psiSecParam, bitSize, chls[nextIdx], otCountRecv, otRecv[nextIdx], otSend[nextIdx], ZeroBlock, true);
+							recv[nextIdx].init(opt, nParties, setSize, psiSecParam, bitSize, chls[nextIdx], otCountRecv, otRecv[nextIdx], otSend[nextIdx], ZeroBlock, true);
 						}
 					});
 
@@ -1742,7 +1738,7 @@ void tparty(u64 myIdx, u64 nParties, u64 tParties, u64 setSize, u64 nTrials, std
 						//std::cout << IoStream::lock;
 						//std::cout << myIdx << "| : " << "| thr[" << pIdx << "]:" << myIdx << " -> " << nextIdx << ": " << static_cast<int16_t>(dummy[nextIdx]) << "\n";
 						//std::cout << IoStream::unlock;
-						send[nextIdx].init(opt, nParties, nelements, psiSecParam, bitSize, chls[nextIdx], otCountSend, otSend[nextIdx], otRecv[nextIdx], prng.get<block>(), false);
+						send[nextIdx].init(opt, nParties, setSize, psiSecParam, bitSize, chls[nextIdx], otCountSend, otSend[nextIdx], otRecv[nextIdx], prng.get<block>(), false);
 					});
 				}
 			}
@@ -1757,7 +1753,7 @@ void tparty(u64 myIdx, u64 nParties, u64 tParties, u64 setSize, u64 nTrials, std
 				//std::cout << myIdx << "| : " << "| thr[" << pThrds.size() - 1 << "]:" << myIdx << " --> " << leaderIdx << ": " << static_cast<int16_t>(dummy[leaderIdx]) << "\n";
 				//std::cout << IoStream::unlock;
 
-				send[leaderIdx].init(opt, nParties, nelements, psiSecParam, bitSize, chls[leaderIdx], otCountSend, otSend[leaderIdx], otRecv[leaderIdx], prng.get<block>(), false);
+				send[leaderIdx].init(opt, nParties, setSize, psiSecParam, bitSize, chls[leaderIdx], otCountSend, otSend[leaderIdx], otRecv[leaderIdx], prng.get<block>(), false);
 			});
 
 		}
@@ -1772,7 +1768,7 @@ void tparty(u64 myIdx, u64 nParties, u64 tParties, u64 setSize, u64 nTrials, std
 					std::cout << myIdx << "| : " << "| thr[" << pIdx << "]:" << pIdx << " --> " << myIdx << ": " << static_cast<int16_t>(revDummy[pIdx]) << "\n";
 					std::cout << IoStream::unlock;*/
 
-					recv[pIdx].init(opt, nParties, nelements, psiSecParam, bitSize, chls[pIdx], otCountRecv, otRecv[pIdx], otSend[pIdx], ZeroBlock, false);
+					recv[pIdx].init(opt, nParties, setSize, psiSecParam, bitSize, chls[pIdx], otCountRecv, otRecv[pIdx], otSend[pIdx], ZeroBlock, false);
 				});
 
 			}
@@ -2084,7 +2080,7 @@ void tparty(u64 myIdx, u64 nParties, u64 tParties, u64 setSize, u64 nTrials, std
 		if (myIdx != leaderIdx)
 		{
 
-			for (u64 i = 0; i < nelements; ++i)
+			for (u64 i = 0; i < setSize; ++i)
 			{
 				//xor all received share
 				for (u64 idxP = 0; idxP < ttParties; ++idxP)
@@ -2125,7 +2121,7 @@ void tparty(u64 myIdx, u64 nParties, u64 tParties, u64 setSize, u64 nTrials, std
 			//u64 maskSize = roundUpTo(psiSecParam + 2 * std::log2(setSize) - 1, 8) / 8;
 			u64 count1 = 0;
 			u64 count2 = 0;
-			for (u64 i = 0; i < nelements; ++i)
+			for (u64 i = 0; i < setSize; ++i)
 			{
 				// comment by zengzc 20220104
 				// 对各方数据进行异或
@@ -2233,7 +2229,7 @@ void tparty(u64 myIdx, u64 nParties, u64 tParties, u64 setSize, u64 nTrials, std
 				num_intersection = mIntersection.size();
 			}
 
-			std::cout << "setSize: " << nelements << "\n"
+			std::cout << "setSize: " << setSize << "\n"
 				<< "offlineTime:  " << offlineTime << " ms\n"
 				<< "hashingTime:  " << hashingTime << " ms\n"
 				<< "getOPRFTime:  " << getOPRFTime << " ms\n"
@@ -2271,7 +2267,7 @@ void tparty(u64 myIdx, u64 nParties, u64 tParties, u64 setSize, u64 nTrials, std
 		runtime << "=========avg==========\n";
 		runtime << "numParty: " << nParties
 			<< "  numCorrupted: " << tParties
-			<< "  setSize: " << nelements
+			<< "  setSize: " << setSize
 			<< "  nTrials:" << nTrials << "\n";
 
 		if (myIdx == 0)
@@ -2292,7 +2288,7 @@ void tparty(u64 myIdx, u64 nParties, u64 tParties, u64 setSize, u64 nTrials, std
 
 		std::cout << "numParty: " << nParties
 			<< "  numCorrupted: " << tParties
-			<< "  setSize: " << nelements
+			<< "  setSize: " << setSize
 			<< "  nTrials:" << nTrials << "\n"
 			<< "offlineTime:  " << offlineAvgTime / nTrials << " ms\n"
 			<< "hashingTime:  " << hashingAvgTime / nTrials << " ms\n"
@@ -4095,7 +4091,7 @@ void OPPRFnt_EmptrySet_Test_Impl()
 //	ios.stop();
 //}
 
-void read_elements(u8*** elements, u64** elebytelens, u64* nelements, std::string filename) {
+void read_elements(u8*** elements, u32** elebytelens, u32* nelements, std::string filename) {
 	u32 i, j;
 	std::ifstream infile(filename.c_str());
 	if(!infile.good()) {
@@ -4111,7 +4107,7 @@ void read_elements(u8*** elements, u64** elebytelens, u64* nelements, std::strin
 	std::cout << "nelements:" << *nelements << std::endl;
 
 	*elements=(u8**) malloc(sizeof(u8*)*(*nelements));
-	*elebytelens = (u64*) malloc(sizeof(u64) * (*nelements));
+	*elebytelens = (u32*) malloc(sizeof(u32) * (*nelements));
 
 	infile.clear();
 	infile.seekg(std::ios::beg);
