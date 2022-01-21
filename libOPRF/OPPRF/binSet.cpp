@@ -111,6 +111,7 @@ namespace osuCrypto
 
                 for (u64 i = startIdx; i < endIdx; i += 128)
                 {
+					std::cout<< "endIdx - i:" << endIdx - i << std::endl;
                     auto currentStepSize = std::min(u64(128), endIdx - i);
 					std::cout<< "currentStepSize:" << currentStepSize << std::endl;
 
@@ -133,7 +134,7 @@ namespace osuCrypto
 						for (u64 k = 0; k <mCuckooBins.mParams.mNumHashes[0]; ++k)
 						{
 							hashes[j][k] = *(u64*)&mNcoInputBuff[k][i + j];
-						}		                 					
+						}
 					}
 
 					std::cout<< "tempIdxBuff.size():" << tempIdxBuff.size() << std::endl;

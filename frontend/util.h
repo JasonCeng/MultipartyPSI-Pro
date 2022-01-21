@@ -1,7 +1,5 @@
 #pragma once
 
-
-
 #include "Network/Channel.h"
 void senderGetLatency(osuCrypto::Channel& chl);
 

@@ -170,20 +170,34 @@ namespace osuCrypto
 	{	
 		mN = n;
 
-		if (n <= 1 << 7)
+		if (n <= 1 << 7) {
 			mParams = k2n07s40SimpleParam1;
-		else if (n <= 1 << 8)
+			std::cout<< "Exec SimpleHasher1::init (n <= 1 << 7)" << std::endl;
+		}
+		else if (n <= 1 << 8) {
 			mParams = k2n08s40SimpleParam1;
-		else if (n <= 1 << 12)
+			std::cout<< "Exec SimpleHasher1::init (n <= 1 << 8)" << std::endl;
+		}
+		else if (n <= 1 << 12) {
 			mParams = k2n12s40SimpleParam1;
-		else if (n <= 1 << 14)
+			std::cout<< "Exec SimpleHasher1::init (n <= 1 << 12)" << std::endl;
+		}
+		else if (n <= 1 << 14) {
 			mParams = k2n14s40SimpleParam1;
-		else if (n <= 1 << 16)
+			std::cout<< "Exec SimpleHasher1::init (n <= 1 << 14)" << std::endl;
+		}
+		else if (n <= 1 << 16) {
 			mParams = k2n16s40SimpleParam1;
-		else if (n <= 1 << 20)
+			std::cout<< "Exec SimpleHasher1::init (n <= 1 << 16)" << std::endl;
+		}
+		else if (n <= 1 << 20) {
 			mParams = k2n20s40SimpleParam1;
-		else if (n <= 1 << 24)
+			std::cout<< "Exec SimpleHasher1::init (n <= 1 << 20)" << std::endl;
+		}
+		else if (n <= 1 << 24) {
 			mParams = k2n24s40SimpleParam1;
+			std::cout<< "Exec SimpleHasher1::init (n <= 1 << 24)" << std::endl;
+		}
 		else
 			throw std::runtime_error("not implemented");
 
@@ -197,8 +211,9 @@ namespace osuCrypto
 		mMaxBinSize[0] = mParams.mMaxBinSize[0];
 		mMaxBinSize[1] = mParams.mMaxBinSize[1];
 
-		mBinCount[0] = mParams.mBinScaler[0]*n;
-		mBinCount[1] = mParams.mBinScaler[1] *n;
+		mBinCount[0] = mParams.mBinScaler[0]*n; //1
+		mBinCount[1] = mParams.mBinScaler[1]*n; //0
+		
 
 		mMtx.reset(new std::mutex[mBinCount[0] + mBinCount[1]]);
 		mBins.resize(mBinCount[1] + mBinCount[0]);
@@ -263,13 +278,16 @@ namespace osuCrypto
 	
 	void SimpleHasher1::insertBatch(ArrayView<u64> inputIdxs, MatrixView<u64> hashs)
 	{
+		std::cout<< "Start Exec SimpleHasher1::insertBatch" << std::endl;
 		for (u64 j = 0; j < inputIdxs.size(); ++j)
 		{
+			std::cout<< "Exec SimpleHasher1::insertBatch mNumHashes[0]："<< mNumHashes[0] << std::endl;
 			for (u64 k = 0; k < mNumHashes[0]; ++k)
 			{
 				u64 addr = *(u64*)&hashs[j][k] % mBinCount[0];
-				//if(addr==0)
-				//	std::cout << "----"<<inputIdxs[j] <<"-" << addr << std::endl;
+				std::cout<< "addr:" << addr <<std::endl;
+				if(addr==0)
+					std::cout << "----"<<inputIdxs[j] <<"-" << addr << std::endl;
 
 				std::lock_guard<std::mutex> lock(mMtx[addr]);
 				if (std::find(mBins[addr].mIdx.begin(), mBins[addr].mIdx.end(), inputIdxs[j]) 
@@ -277,25 +295,36 @@ namespace osuCrypto
 					{	
 							mBins[addr].mIdx.emplace_back(inputIdxs[j]);
 							mBins[addr].hIdx.emplace_back(k);
-					//		std::cout << "1----"<<inputIdxs[j] <<"-" << addr << std::endl;
+							std::cout << "1----"<<inputIdxs[j] <<"-" << addr << std::endl;
 					}
 				}
 			}
 
+			std::cout<< "Exec SimpleHasher1::insertBatch mNumHashes[1]："<< mNumHashes[1] << std::endl;
 			for (u64 k = 0; k < mNumHashes[1]; ++k)
 			{
-				u64 addrStash = *(u64*)&hashs[j][k] % mBinCount[1] + mBinCount[0];
+				std::cout<< "&hashs[j][k]:" << *(u64*)&hashs[j][k] <<std::endl;
+				std::cout<< "mBinCount[1]:" << mBinCount[1] <<std::endl; //0
+				std::cout<< "mBinCount[0]:" << mBinCount[0] <<std::endl; //1
+				u64 addrStash = 0;
+				try {
+					addrStash = *(u64*)&hashs[j][k] % mBinCount[1] + mBinCount[0];
+					std::cout<< "addrStash:" << addrStash <<std::endl;
+				} catch(...) {
+					std::cout << "try catch exception" << std::endl;
+				}
 
 				std::lock_guard<std::mutex> lock(mMtx[addrStash]);
 				if (std::find(mBins[addrStash].mIdx.begin(), mBins[addrStash].mIdx.end(), inputIdxs[j])
-					== mBins[addrStash].mIdx.end()) {				
+					== mBins[addrStash].mIdx.end()) {
 					mBins[addrStash].mIdx.emplace_back(inputIdxs[j]);
 					mBins[addrStash].hIdx.emplace_back(mNumHashes[0]+k);
-					//	std::cout << "2----" << inputIdxs[j] << "-" << addrStash << std::endl;
+						std::cout << "2----" << inputIdxs[j] << "-" << addrStash << std::endl;
 
 				}
 			}
 
 		}
+		std::cout<< "End Exec SimpleHasher1::insertBatch" << std::endl;
 	}
 }

@@ -6,6 +6,7 @@
 #include <fstream>
 using namespace osuCrypto;
 #include "util.h"
+#include "SHA256.h"
 
 #include "Common/Defines.h"
 #include "NChooseOne/KkrtNcoOtReceiver.h"
@@ -17,10 +18,14 @@ using namespace osuCrypto;
 #include "Common/Log1.h"
 #include "Common/Timer.h"
 #include "Crypto/PRNG.h"
+#include "Crypto/Commit.h"
 #include <numeric>
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <functional>
+#include <unordered_map>
+#include <time.h>
 
 #include "OtBinMain.h"
 
@@ -1507,9 +1512,10 @@ void tparty(u64 myIdx, u64 nParties, u64 tParties, u64 setSize, u64 nTrials, std
 
         // add by zengzc 20220114
 		std::cout << "==========start build set==========" << "\n";
+		std::vector<std::string> itemStrVector(nelements);
+		SHA256 sha;
 		for(i = 0; i < nelements; i++) {
             // std::cout << "before create itemStrVector" << "\n";
-			std::vector<std::string> itemStrVector(nelements);
             // std::cout << "after create itemStrVector" << "\n";
             std::string itemStr = "";
 			for(j = 0; j < (elebytelens)[i]; j++) {
@@ -1518,16 +1524,44 @@ void tparty(u64 myIdx, u64 nParties, u64 tParties, u64 setSize, u64 nTrials, std
             itemStrVector[i] = itemStr;
             // std::cout << "itemStrVector[i]=" << itemStrVector[i] << "\n";
 
-			// std::string s = itemStrVector[i];
-			int len = itemStr.length();
+			// int len = itemStr.length();
+			// int b[4] = {};
+			// for ( std::string::size_type k = 0, m = 0; k < 4 && m < itemStr.size(); m++ )
+			// {
+			// 	b[k] = b[k] << len | (unsigned char)itemStr[m];
+			// 	if ( m % sizeof( *b ) == sizeof( *b ) - 1 ) k++;
+			// }
+
+			// // set[i] = _mm_set_epi32(b[0],b[1],b[2],b[3]);
+			// std::hash<std::string> str_hash;
+			// // std::cout << "std::hash<std::string>占 " << sizeof(std::hash<std::string>) << " 字节" << "\n";
+			// // set[i] = str_hash(itemStr);
+			// str_hash(itemStr);
+			// PRNG myPrng(_mm_set_epi32(b[0],b[1],b[2],b[3]));
+			// block seed1 = myPrng.get<block>();
+			// Commit myComm1(seed1);
+			// // std::cout << myComm1.data() << "\n";
+			// set[i] = seed1;
+			// std::cout << set[i] << "\n";
+			// std::cout << "block seed1占 " << sizeof(set[i]) << " 字节" << "\n";
+
+			std::hash<std::string> str_hash;
+			time_t salt = std::time(NULL);
+			// std::cout<< "salt:" << std::to_string(salt) << "\n";
+			std::string strHash = sha.getSHA256Str(itemStr,std::to_string(i)); //sha256 hash
+			// std::string strHash = std::to_string(str_hash(itemStr)); //c++ 原生hash
+
+			int len = strHash.length();
 			int b[4] = {};
-			for ( std::string::size_type k = 0, m = 0; k < 4 && m < itemStr.size(); m++ )
+			for ( std::string::size_type k = 0, m = 0; k < 4 && m < strHash.size(); m++ )
 			{
-				b[k] = b[k] << len | (unsigned char)itemStr[m];
+				b[k] = b[k] << len | (unsigned char)strHash[m];
 				if ( m % sizeof( *b ) == sizeof( *b ) - 1 ) k++;
 			}
 
-			set[i] = _mm_set_epi32(b[0],b[1],b[2],b[3]);
+			block seed1 = _mm_set_epi32(b[0],b[1],b[2],b[3]);
+			PRNG myPrng(seed1);
+			set[i] = myPrng.get<block>();
 			std::cout << set[i] << "\n";
 		}
 		std::cout << "==========end build set==========" << "\n";
@@ -2153,10 +2187,10 @@ void tparty(u64 myIdx, u64 nParties, u64 tParties, u64 setSize, u64 nTrials, std
 				{
 					count1++;
 					mIntersection.push_back(set[i]);
-					// std::cout << set[i] << "\n";
+					std::cout << set[i] << "\n";
 				} else {
 					count2++;
-					// std::cout << sum << "\n";
+					std::cout << sum << "\n";
 				}
 			}
 

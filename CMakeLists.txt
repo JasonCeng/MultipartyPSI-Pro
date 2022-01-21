@@ -88,5 +88,5 @@ include_directories(libOPRF)
 #              Build Frontend               #
 #############################################
 add_subdirectory(frontend)
-
+include_directories(frontend)
 
