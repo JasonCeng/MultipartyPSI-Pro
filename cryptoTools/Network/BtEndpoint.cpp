@@ -27,13 +27,16 @@ namespace osuCrypto {
         mStopped = (false);
         mName = (name);
 
-        if (host)
+        if (host) {
             mAcceptor = (ioService.getAcceptor(*this));
+            std::cout<< "BtEndpoint::start mAcceptor:" << mAcceptor <<std::endl;
+        }
         else
         {
             boost::asio::ip::tcp::resolver resolver(mIOService->mIoService);
             boost::asio::ip::tcp::resolver::query query(remoteIP, boost::lexical_cast<std::string>(port));
             mRemoteAddr = *resolver.resolve(query);
+            std::cout<< "BtEndpoint::start mRemoteAddr:" << mRemoteAddr <<std::endl;
         }
 
         std::lock_guard<std::mutex> lock(ioService.mMtx);
@@ -92,6 +95,7 @@ namespace osuCrypto {
         {
             // if we are a host, then we can ask out acceptor for the socket which match the channel name.
             chl.mSocket.reset(mAcceptor->getSocket(chl));
+            std::cout<< "BtEndpoint::addChannel if (mHost)" <<std::endl;
         }
         else
         {

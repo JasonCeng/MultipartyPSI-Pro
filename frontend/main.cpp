@@ -13,6 +13,9 @@ using namespace osuCrypto;
 #include <numeric>
 #include <string>
 #include "Common/Log.h"
+
+#include <boost/algorithm/string/classification.hpp> // Include boost::for is_any_of
+#include <boost/algorithm/string/split.hpp> // Include for boost::split
 //int miraclTestMain();
 
 
@@ -48,6 +51,9 @@ int main(int argc, char** argv)
 	u64 roundOPPRF;
 
 	std::string filename;
+
+	std::string hostIpStr;
+	std::vector<std::string> hostIpArr;
 
 	switch (argc) {
 	case 2: //unit test
@@ -89,7 +95,7 @@ int main(int argc, char** argv)
 		}
 		break;
 	// case 9: //nPSI or optimized 3PSI
-	case 11: //nPSI or optimized 3PSI
+	case 13: //nPSI or optimized 3PSI
 		cout << "nPSI or optimized 3PSI: argc=11\n";
 		// comment by zengzc 20211231
 		// -n：number of parties
@@ -146,6 +152,21 @@ int main(int argc, char** argv)
 			return 0;
 		}
 
+		if (argv[11][0] == '-' && argv[11][1] == 'i' && argv[11][2] == 'p')
+		{
+			hostIpStr = argv[12];
+
+			boost::split(hostIpArr, hostIpStr, boost::is_any_of(","), boost::token_compress_on);
+			for(hostIp : hostIpArr) {
+				std::cout << hostIp << "\n";
+			}
+		}
+		else
+		{
+			usage(argv[0]);
+			return 0;
+		}
+
 		// comment by zengzc 20220104
 		// -p：party ID
 		if (argv[7][0] == '-' && argv[7][1] == 'p') {
@@ -158,8 +179,8 @@ int main(int argc, char** argv)
 			else if (argv[3][1] == 't') //zengzc:重点关注这个分支
 			{
 				cout << "zengzc log: =======================exec tparty=======================\n";
-				cout << "pIdx:" << pIdx << " nParties:" << nParties << " tParties:" << tParties << " setSize:" << setSize << " trials:" << trials << " filename:" << filename << "\n";
-				tparty(pIdx, nParties, tParties, setSize, trials, filename);
+				cout << "pIdx:" << pIdx << " nParties:" << nParties << " tParties:" << tParties << " setSize:" << setSize << " trials:" << trials << " filename:" << filename << " hostIpArr.size():" << hostIpArr.size() << "\n";
+				tparty(pIdx, nParties, tParties, setSize, trials, hostIpArr, filename);
 			}
 			else if (argv[3][1] == 'a')
 			{

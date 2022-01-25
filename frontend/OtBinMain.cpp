@@ -26,6 +26,12 @@ using namespace osuCrypto;
 #include <functional>
 #include <unordered_map>
 #include <time.h>
+#include <cstring>      ///< memset
+#include <errno.h>      ///< errno
+#include <sys/socket.h> ///< socket
+#include <netinet/in.h> ///< sockaddr_in
+#include <arpa/inet.h>  ///< getsockname
+#include <unistd.h>     ///< close
 
 #include "OtBinMain.h"
 
@@ -1384,7 +1390,7 @@ bool is_in_dual_area(u64 startIdx, u64 endIdx, u64 numIdx, u64 checkIdx) {
 
 //leader is n-1
 // default nTrials=1
-void tparty(u64 myIdx, u64 nParties, u64 tParties, u64 setSize, u64 nTrials, std::string filename)
+void tparty(u64 myIdx, u64 nParties, u64 tParties, u64 setSize, u64 nTrials, std::vector<std::string> hostIpArr, std::string filename)
 {
 	u64 opt = 0;
 	std::fstream runtime;
@@ -1400,6 +1406,8 @@ void tparty(u64 myIdx, u64 nParties, u64 tParties, u64 setSize, u64 nTrials, std
 	//read in files and get elements and byte-length from there
 	std::cout << "++++++++++start read_elements++++++++++" << "\n";
 	read_elements(&elements, &elebytelens, &nelements, filename);
+
+	std::vector<std::string> itemStrVector(nelements); //add by zengzc 20220121: 明文元素集合
 	// for(i = 0; i < nelements; i++) {
 	// 	std::cout << "Element " << i << ": ";
 	// 	for(j = 0; j < (elebytelens)[i]; j++) {
@@ -1444,20 +1452,34 @@ void tparty(u64 myIdx, u64 nParties, u64 tParties, u64 setSize, u64 nTrials, std
 
 	std::vector<BtEndpoint> ep(nParties); // BtEndpoint vector
 
-	// myIdx = 0 client
+	// myIdx = 0 client, which can receive intersection result
 	// myIdx > 0 server
+	// add by zengzc 20220124
+	// 创建p2p网络
+	for(u64 i = 0, j = 0; i < myIdx && j < hostIpArr.size() && i < nParties; ++j, ++i) {
+		std::cout<< "tparty() if (i < myIdx)" << std::endl;
+		u32 port = 1200 + i * 100 + myIdx;//get the same port; i=1 & pIdx=2 =>port=102
+		// u32 port = 1301; 200+1
+		std::string remoteIp(hostIpArr[j]);
+		std::cout<< "hostIp:port "<< remoteIp << ":" << port <<std::endl;
+		ep[i].start(ios, remoteIp, port, false, name); //channel bwt i and pIdx, where i is sender
+	}
+
+	char buffer[80];
+	GetPrimaryIp(buffer);
+	std::string localIp = buffer;
+
 	for (u64 i = 0; i < nParties; ++i)
 	{
-		if (i < myIdx)
+		if (i > myIdx)
 		{
-			u32 port = 1200 + i * 100 + myIdx;;//get the same port; i=1 & pIdx=2 =>port=102
-			ep[i].start(ios, "localhost", port, false, name); //channel bwt i and pIdx, where i is sender
-		}
-		else if (i > myIdx)
-		{
+			std::cout<< "tparty() else if (i > myIdx)" << std::endl;
 			u32 port = 1200 + myIdx * 100 + i;//get the same port; i=2 & pIdx=1 =>port=102
-			ep[i].start(ios, "localhost", port, true, name); //channel bwt i and pIdx, where i is receiver
+			// u32 port = 1200; 1201
+			std::cout<< "hostIp:port "<< localIp << ":" << port <<std::endl;
+			ep[i].start(ios, localIp, port, true, name); //channel bwt i and pIdx, where i is receiver
 		}
+	
 	}
 
 	std::vector<std::vector<Channel*>> chls(nParties);
@@ -1475,7 +1497,7 @@ void tparty(u64 myIdx, u64 nParties, u64 tParties, u64 setSize, u64 nTrials, std
 			for (u64 j = 0; j < numThreads; ++j)
 			{
 				//chls[i][j] = &ep[i].addChannel("chl" + std::to_string(j), "chl" + std::to_string(j));
-				chls[i][j] = &ep[i].addChannel(name, name);
+				chls[i][j] = &ep[i].addChannel(name, name); // name="psi"
 				//chls[i][j].mEndpoint;
 			}
 		}
@@ -1512,38 +1534,14 @@ void tparty(u64 myIdx, u64 nParties, u64 tParties, u64 setSize, u64 nTrials, std
 
         // add by zengzc 20220114
 		std::cout << "==========start build set==========" << "\n";
-		std::vector<std::string> itemStrVector(nelements);
+		
 		SHA256 sha;
 		for(i = 0; i < nelements; i++) {
-            // std::cout << "before create itemStrVector" << "\n";
-            // std::cout << "after create itemStrVector" << "\n";
             std::string itemStr = "";
 			for(j = 0; j < (elebytelens)[i]; j++) {
 				itemStr += (elements)[i][j];
 			}
             itemStrVector[i] = itemStr;
-            // std::cout << "itemStrVector[i]=" << itemStrVector[i] << "\n";
-
-			// int len = itemStr.length();
-			// int b[4] = {};
-			// for ( std::string::size_type k = 0, m = 0; k < 4 && m < itemStr.size(); m++ )
-			// {
-			// 	b[k] = b[k] << len | (unsigned char)itemStr[m];
-			// 	if ( m % sizeof( *b ) == sizeof( *b ) - 1 ) k++;
-			// }
-
-			// // set[i] = _mm_set_epi32(b[0],b[1],b[2],b[3]);
-			// std::hash<std::string> str_hash;
-			// // std::cout << "std::hash<std::string>占 " << sizeof(std::hash<std::string>) << " 字节" << "\n";
-			// // set[i] = str_hash(itemStr);
-			// str_hash(itemStr);
-			// PRNG myPrng(_mm_set_epi32(b[0],b[1],b[2],b[3]));
-			// block seed1 = myPrng.get<block>();
-			// Commit myComm1(seed1);
-			// // std::cout << myComm1.data() << "\n";
-			// set[i] = seed1;
-			// std::cout << set[i] << "\n";
-			// std::cout << "block seed1占 " << sizeof(set[i]) << " 字节" << "\n";
 
 			std::hash<std::string> str_hash;
 			time_t salt = std::time(NULL);
@@ -2153,6 +2151,7 @@ void tparty(u64 myIdx, u64 nParties, u64 tParties, u64 setSize, u64 nTrials, std
 		//##########################
 
 		std::vector<block> mIntersection; // comment by zengzc 20220104:隐私求交集合
+		std::vector<u64> mIntersectionPos;
 		if (myIdx == leaderIdx) {
 			std::cout << "==========Begin leader exec online phasing - compute intersection==========" << "\n";
 
@@ -2187,6 +2186,7 @@ void tparty(u64 myIdx, u64 nParties, u64 tParties, u64 setSize, u64 nTrials, std
 				{
 					count1++;
 					mIntersection.push_back(set[i]);
+					mIntersectionPos.push_back(i);
 					std::cout << set[i] << "\n";
 				} else {
 					count2++;
@@ -2194,11 +2194,16 @@ void tparty(u64 myIdx, u64 nParties, u64 tParties, u64 setSize, u64 nTrials, std
 				}
 			}
 
-			std::cout << "zengzc Intersection count1:" << count1 << "\n";
-			std::cout << "zengzc Intersection count2:" << count2 << "\n";
+			std::cout << "zengzc     Intersection data count:" << count1 << "\n";
+			std::cout << "zengzc not Intersection data count:" << count2 << "\n";
 
+			std::cout << "交集密文：" << "\n";
 			for(intersection : mIntersection) {
 				std::cout << intersection << "\n";
+			}
+			std::cout << "交集原文：" << "\n";
+			for(intersectionPos : mIntersectionPos) {
+				std::cout << itemStrVector[intersectionPos] << "\n";
 			}
 
 			std::cout << "==========End leader exec online phasing - compute intersection==========" << "\n";
@@ -2982,6 +2987,8 @@ void OPPRFnt_EmptrySet_Test_Main()
 	u64 tParties = 2;
 
 	std::string filename("./inpput.bin");
+	std::vector<std::string> hostIpArr(1);
+	hostIpArr.push_back("localhost");
 
 	std::vector<std::thread>  pThrds(nParties);
 	for (u64 pIdx = 0; pIdx < pThrds.size(); ++pIdx)
@@ -2989,7 +2996,7 @@ void OPPRFnt_EmptrySet_Test_Main()
 		{
 			pThrds[pIdx] = std::thread([&, pIdx]() {
 				//	Channel_party_test(pIdx);
-				tparty(pIdx, nParties, tParties, setSize, 1, filename);
+				tparty(pIdx, nParties, tParties, setSize, 1, hostIpArr, filename);
 			});
 		}
 	}
@@ -4166,4 +4173,49 @@ void read_elements(u8*** elements, u64** elebytelens, u64* nelements, std::strin
 #endif
 	}
 	std::cout << "++++++++++end read file++++++++++" << std::endl;
+}
+
+void GetPrimaryIp(char (&buffer)[80])
+{
+    const char* google_dns_server = "8.8.8.8";
+    int dns_port = 53;
+
+    struct sockaddr_in serv;
+    int sock = socket(AF_INET, SOCK_DGRAM, 0);
+
+    //Socket could not be created
+    if(sock < 0)
+    {
+        std::cout << "Socket error" << std::endl;
+    }
+
+    memset(&serv, 0, sizeof(serv));
+    serv.sin_family = AF_INET;
+    serv.sin_addr.s_addr = inet_addr(google_dns_server);
+    serv.sin_port = htons(dns_port);
+
+    int err = connect(sock, (const struct sockaddr*)&serv, sizeof(serv));
+    if (err < 0)
+    {
+        std::cout << "Error number: " << errno
+            << ". Error message: " << strerror(errno) << std::endl;
+    }
+
+    struct sockaddr_in name;
+    socklen_t namelen = sizeof(name);
+    err = getsockname(sock, (struct sockaddr*)&name, &namelen);
+
+    // char buffer[80];
+    const char* p = inet_ntop(AF_INET, &name.sin_addr, buffer, 80);
+    if(p != NULL)
+    {
+        std::cout << "Local IP address is: " << buffer << std::endl;
+    }
+    else
+    {
+        std::cout << "Error number: " << errno
+            << ". Error message: " << strerror(errno) << std::endl;
+    }
+
+    close(sock);
 }
