@@ -1,31 +1,33 @@
-# Programmable Oblivious PRF & multi-party PSI 基于可编程不经意伪随机数的多方隐私求交算法库
+# 基于可编程不经意伪随机数的多方隐私求交算法库
+Programmable Oblivious PRF & multi-party PSI
 
-本算法库是基于[osu-crypto/MultipartyPSI](https://github.com/osu-crypto/MultipartyPSI)的增强实现，主要增强了如下功能：
-
-- 支持读取文件数据
-- 支持多机通信
+## 📣 简介
+本算法库是基于[osu-crypto/MultipartyPSI](https://github.com/osu-crypto/MultipartyPSI)的增强实现。
 
 该算法的原论文来自 [CCS 2017](http://dl.acm.org/xxx) : **Practical Multi-party Private Set Intersection from Symmetric-Key Techniques**[[ePrint](https://eprint.iacr.org/2017/xxx)]
 
-## 验证情况
+## ✨ 特性
 
-- 机器配置： 1C 2G (Intel(R) Core(TM) i7-8665U CPU @ 1.90GHz)
-- 数量：3台（3方）
-- 数据集大小：8条
-- 数据长度：128bit
-- 3方求交耗时：1.035 s
+* 简洁的 API 设计，使用如丝滑般流畅
+* 支持多方隐私求交
+* 支持读取文件数据
+* 支持多机通信
+* 在**增强半诚实模型**和**标准半诚实模型**中实现了多方PSI(nPSI)，安全性有保障
+* 核心算法**可编程OPRF(Programmable Oblivious PRF)**，包含以下多种实现:
+    * Table-based OPPRF
+    * Polynomial-based  OPPRF
+    * BloomFilter-based OPPRF
+* 详细的文档和示例，帮助开发者更快的上手项目
 
-## 创新特性
-### 1. 核心算法：可编程OPRF(Programmable Oblivious PRF)
-对于可编程OPRF(Programmable Oblivious PRF), 此算法库包含以下实现:
-* Table-based OPPRF
-* Polynomial-based  OPPRF
-* BloomFilter-based OPPRF
+## 🛠️ 验证情况
 
-### 2. 安全性
-此算法库在**增强半诚实模型**和**标准半诚实模型**中实现了多方 PSI (nPSI)。
+* 机器配置： 1C 2G (Intel(R) Core(TM) i7-8665U CPU @ 1.90GHz)
+* 数量：3台（3方）
+* 数据集大小：8条
+* 数据长度：128bit
+* 3方求交耗时：1.035 s
 
-## 使用方法
+## 📝 使用
 
 ### 依赖库
 - 支持 C++14 的 C++ 编译器
@@ -97,13 +99,13 @@
 三台机器的ip分别是：`192.168.1.10,192.168.1.11,192.168.1.12`
 
 ```shell
-# 机器1：
+# 机器1-192.168.1.10：
 ./bin/frontend.exe -n 3 -t 2 -m 12 -p 0 -f ./data.bin -ip 192.168.1.11,192.168.1.12 > log01.log
 
-# 机器2：
+# 机器2-192.168.1.11：
 ./bin/frontend.exe -n 3 -t 2 -m 12 -p 1 -f ./data.bin -ip 192.168.1.10,192.168.1.12 > log02.log
 
-# 机器3：
+# 机器3-192.168.1.12：
 ./bin/frontend.exe -n 3 -t 2 -m 12 -p 2 -f ./data.bin -ip 192.168.1.10,192.168.1.11 > log03.log
 ```
 
@@ -127,6 +129,14 @@
 # 机器3：
 ./bin/frontend.exe -n 3 -t 2 -m 12 -p 2 -f ./data.bin -ip 192.168.1.10,192.168.1.11 > log03.log
 ```
+
+## 💡 后续工作
+
+- [ ] 移除运行时非必要参数，如`-m`
+- [ ] 所有分支均支持`-f`传入文本文件数据
+- [ ] 所有分支均支持`-ip`进行多机通信
+- [ ] 输出求交结果到指定路径，由leader传入指定路径
+- [ ] 对小样本、大样本数据进行测试
 	
-## 帮助
+## 📃 帮助
 有关构建或运行该算法库的任何问题，请联系 [JasonCeng](https://www.cnblogs.com/JasonCeng/) by mail: zengzhaochuangx@qq.com
