@@ -139,4 +139,4 @@ Programmable Oblivious PRF & multi-party PSI
 - [ ] 对小样本、大样本数据进行测试
 	
 ## 📃 帮助
-有关构建或运行该算法库的任何问题，请联系 [JasonCeng](https://www.cnblogs.com/JasonCeng/) by mail: zengzhaochuangx@qq.com
+有关构建或运行该算法库的任何问题，请联系 [JasonCeng](https://www.cnblogs.com/JasonCeng/) by email: zengzhaochuangx@qq.com
